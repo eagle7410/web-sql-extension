@@ -103,4 +103,15 @@ export default class Query {
 		return text;
 	}
 
+	insertValues (arInsert) {
+		const insertSerial = (insert) => {
+			return `(${insert.join(',')})`;
+		};
+
+		if (Array.isArray(arInsert[0])) {
+            return arInsert.map(insertSerial).join(',');
+		}
+
+		return insertSerial(arInsert);
+	}
 }

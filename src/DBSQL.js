@@ -1,25 +1,61 @@
-import QueryBuilder from "./QueryBuilder";
+import WebSQL from './drivers/web-sql/WebSQL'
+import DriverInterface from './drivers/DriverInterface'
 
 class DBSQL {
-	constructor() {
+    constructor(driver) {
 		const that  = this;
-		that._db    = null;
-		that._query = new QueryBuilder();
-		that._tx    = null;
-		that._dbParams = {
-			name       : 'web_db',
-			version    : '0.0.1',
-			nameDisplay: 'Database in browser',
-			prevSize    : 200000,
-		};
+
+		let constant = DBSQL.driverConst();
+
+		switch (driver) {
+			case constant.WebSQL:
+                that._driver = new WebSQL();
+				break;
+			default :
+				if (!window.indexedDB) {
+                    // проверяем существования префикса.
+                    window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+                    // НЕ ИСПОЛЬЗУЙТЕ "var indexedDB = ..." вне функции.
+                    // также могут отличаться и window.IDB* objects: Transaction, KeyRange и тд
+                    window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+                    window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
+                    // if (!window.indexedDB)
+                    // 	that._driver = new WebSQL();
+					console.log('set web sql');
+                    that._driver = new WebSQL();
+
+                }
+
+		}
+
+    }
+
+    /**
+	 *
+     * @returns {{WebSQL : int, IndexedDb: int}}
+     */
+    static driverConst () {
+		return {...{
+            WebSQL : 1,
+            IndexedDb : 2
+        }};
 	}
 
-	queryConst() {
-		return this._query.constant()
+    /**
+	 *
+     * @returns {{ASC: number, DESK: number, TYPE_INT: string, TYPE_INTEGER: string, TYPE_TINYINT: string, TYPE_SMALLINT: string, TYPE_MEDIUMINT: string, TYPE_BIGINT: string, TYPE_TEXT: string, TYPE_CHAR: string, TYPE_VARCHAR: string, TYPE_CHARACTER: string, TYPE_REAL: string, TYPE_DOUBLE_FLOAT: string, TYPE_DOUBLE: string, TYPE_DOUBLE_PRECISION: string, TYPE_DATETIME: string, TYPE_DATE: string, TYPE_BOOLEAN: string, TYPE_NUMERIC: string, TYPE_DECIMAL: string}}
+     */
+    queryConst() {
+		return this._driver.queryConst();
 	}
 
+    /**
+	 *
+     * @returns {Boolean}
+     */
 	isOpen() {
-		return Boolean(this._db !== null);
+		return this._driver.isOpen;
 	}
 
 	/**
@@ -27,30 +63,10 @@ class DBSQL {
 	 * @param params
 	 * @returns {Promise}
 	 */
-	init(params = {}) {
-		const that = this;
-
-		let option = {...that._dbParams, ...params};
-
-		return new Promise((ok, bad) => {
-			that._db = openDatabase(
-				option.name,
-				option.version,
-				option.nameDisplay,
-				option.prevSizes
-			);
-
-			if (!that._db) {
-				return bad('Database not create');
-			}
-
-			that._db.transaction(tx => {
-				that._tx = tx;
-				ok(that);
-			})
-
-		})
+	init(params) {
+		return this._driver.init(params)
 	}
+
 
 	/**
 	 *
@@ -58,16 +74,7 @@ class DBSQL {
 	 * @returns {Promise}
 	 */
 	dropSafe (table) {
-		let that = this;
-
-		return new Promise((ok, bad) => {
-			this._tx.executeSql(
-				`DROP TABLE IF EXISTS ${table}`,
-				[],
-				() => ok(),
-				(tx, err) => bad(err)
-			);
-		});
+		return this._driver.dropSafe(table);
 	}
 
 	/**
@@ -76,17 +83,8 @@ class DBSQL {
 	 * @param fields {{fieldName : object,..}| null}
 	 * @returns {Promise}
 	 */
-	createTable(table, fields = {}) {
-		let that = this;
-
-		return new Promise((ok, bad) => {
-			that._tx.executeSql(
-				that._query.createTable(table, fields),
-				[],
-				(tx, res) => ok(res),
-				(tx, err) => bad(err)
-			);
-		});
+	createTable(table, fields) {
+		this._driver.createTable(table, fields);
 	}
 
 	/**
@@ -99,33 +97,43 @@ class DBSQL {
 	 * @returns {Promise}
 	 */
 	select (table, fields, where, limit, offset) {
-		let that = this;
-
-		return new Promise((ok, bad) => {
-			that._tx.executeSql(
-				that._query.select(table, fields, where, limit, offset),
-				[],
-				(tx, res) => ok(res.rows),
-				(tx, err) => bad(err)
-			);
-		});
+		return this._driver.select(table, fields, where, limit, offset);
 	}
 
-	/**
+    /**
 	 *
-	 * @returns {Promise}
-	 */
-	isEmpty () {
-		let that = this;
-
-		return new Promise((ok, bad) => {
-			that.select('sqlite_master', '*', 'type="table" AND name NOT IN ("__WebKitDatabaseInfoTable__", "sqlite_sequence")', 1)
-				.then(rows => ok(Boolean(!rows.length)))
-				.catch(err => bad(err));
-		});
-
+     * @param table {string}
+     * @param fields {object}
+     * @param arInsert {array}
+	 *
+     * @returns {Promise}
+     */
+	insert(table, fields, arInsert) {
+		return this._driver.insert(table, fields, arInsert);
 	}
 
+    /**
+	 *
+     * @returns {Promise}
+     */
+	isEmpty () {
+		return this._driver.isEmpty();
+	}
+
+    /**
+	 *
+     * @param table {string}
+     * @param setFields {object}
+     * @param where {string|null}
+     * @returns {Promise}
+     */
+	update (table, setFields, where) {
+		return this._driver.update(table, setFields, where)
+	}
+
+	remove (table, where) {
+        return this._driver.remove(table, where);
+	}
 }
 
 window.DbSqlClass = DBSQL;

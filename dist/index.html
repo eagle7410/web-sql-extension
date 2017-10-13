@@ -8,6 +8,161 @@
 	<script type="text/javascript" src="example/example.js"></script>
 </head>
 <body>
-	<div class="connect_status"></div>
+	<style>
+		.error { color : red; font-size: 2em}
+		.success { color : chartreuse }
+		.test_number {color: gainsboro; font-size: 0.5em}
+		.the_end {color: darkgray; font-size: 2em; margin-top: 10px}
+		.first_part,
+		.second_part { width: 45%; display : inline-block !important;}
+		pre{
+			font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+			margin-bottom: 10px;
+			overflow: auto;
+			width: auto;
+			padding: 5px;
+			background-color: #eee;
+			width: 650px!ie7;
+			padding-bottom: 20px!ie7;
+			max-height: 600px;
+			font-size: 0.75em
+		}
+	</style>
+	<div class="second_part">
+		<pre>
+			<code>
+let count = 0;
+let setResult = (selector, mess, isOk, noCount) => {
+
+	let $block = $(selector);
+
+	$block
+		.text(mess)
+		.addClass(isOk ? 'success' : 'error');
+
+	if (!noCount)
+        $block.before($('<b/>', {
+			text : `TEST #${++count}`,
+			class : 'test_number'
+		}));
+};
+
+$(function () {
+    "use strict";
+
+	let db = new DbSqlClass();
+
+	let constant = db.queryConst();
+
+    let fieldsTableTets = {
+        id : {
+            type: constant.TYPE_INT,
+            pk : {
+                order : constant.ASC
+            }
+        },
+        text : {
+            type: constant.TYPE_CHAR + '(20)',
+            require : true,
+            unique  : true
+        }
+    };
+
+    const arInsert = [['"text1"'], ['"text2"']];
+
+	let doit = async () => {
+		try {
+            await db.init();
+
+            setResult('.connect_status', 'CONNECT OK', true);
+
+            // clear data
+            await db.dropSafe('test');
+
+            let isEmpty = await db.isEmpty();
+
+            setResult(
+                '.db_empty',
+                'DATABASE IS EMPTY '+ (isEmpty ? 'YES' : 'NO'),
+                isEmpty,
+            );
+
+            await db.createTable('test', fieldsTableTets);
+
+            setResult('.create_test_table', 'TABLE "test" IS CREATED ', true);
+
+            await db.insert('test', ['text'], arInsert);
+
+            setResult('.inser_to_test_table', 'INSERT INTO "test" ', true);
+
+            let rows = await db.select('test', 'id, text');
+
+            console.log('Get rows', rows);
+
+            if (!rows || !rows.length) throw new Error('Empty table after insert');
+
+            let sumIds = rows.reduce((prev, next) => (prev.id || 0) + (next.id || 0));
+
+            setResult('.check_autoincement', 'CHECK AUTOINCREMENT ', sumIds === 3);
+            setResult('.check_select', 'CHECK SELECT DATA', rows[0].text === 'text1' && rows[1].text === 'text2');
+
+            await db.update('test', {text : '"UPDATE"'}, 'id = 2');
+
+            rows = await db.select('test', 'text', 'id = 2');
+
+            setResult('.check_update', 'CHECK UPDATE', rows[0].text === 'UPDATE');
+
+            await db.delete('test', 'id = 1');
+
+            rows = await db.select('test', 'id');
+
+            setResult('.check_delete_where', 'CHECK DELETE BY CONDITION ', rows.length === 1);
+
+            await db.delete('test');
+
+            rows = await db.select('test', 'id');
+
+            setResult('.check_delete_all', 'CHECK DELETE ALL IN TABLE  ', rows.length === 0);
+
+            await db.dropSafe('test');
+
+            setResult('.drop_exist', 'TABLE "test" IS drop safe (be exist) ', true );
+
+            await db.dropSafe('test');
+
+            setResult('.drop_exist_empty', 'TABLE "test" IS drop safe (no exist)', true);
+
+            setResult('.the_end', 'THE END', true, true);
+
+		} catch (e) {
+            setResult('.error', e.message);
+            throw new Error(e);
+		}
+
+	};
+
+	doit();
+
+});
+		  </code>
+		</pre>
+	</div>
+	<div class="first_part">
+		<div class="connect_status"></div>
+		<div class="db_empty"></div>
+		<div class="create_test_table"></div>
+		<div class="inser_to_test_table"></div>
+		<div class="check_autoincement"></div>
+		<div class="check_select"></div>
+		<div class="check_update"></div>
+		<div class="check_delete_where"></div>
+		<div class="check_delete_all"></div>
+		<div class="drop_exist"></div>
+		<div class="drop_exist_empty"></div>
+		<div class="the_end"></div>
+		<div class="error"></div>
+	</div>
+
+
 </body>
 </html>
