@@ -3,9 +3,6 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Example</title>
-	<script type="text/javascript" src="wed.sql.js"></script>
-	<script type="text/javascript" src="example/jquery.min.js"></script>
-	<script type="text/javascript" src="example/example.js"></script>
 </head>
 <body>
 <style>
@@ -61,123 +58,102 @@ let setResult = (selector, mess, isOk, noCount) => {
 		.addClass(isOk ? 'success' : 'error');
 
 	if (!noCount)
-		$block.before($('<b/>', {
-			text: `TEST #${++count}`,
-			class: 'test_number'
+        $block.before($('<b/>', {
+			text : `TEST #${++count}`,
+			class : 'test_number'
 		}));
 };
 
-
 $(function () {
-	"use strict";
+    "use strict";
 
-	// let db = new DbSqlClass(DbSqlClass.driverConst().IndexedDb);
 	let db = new DbSqlClass();
 
 	let constant = db.queryConst();
 
-	let fieldsTableTets = {
-		id: {
-			type: constant.TYPE_INT,
-			pk: {
-				order: constant.ASC
-			}
-		},
-		text: {
-			type: constant.TYPE_TEXT,
-			require: true,
-			unique: true
-		},
-		comment: {
-			type: constant.TYPE_CHAR + '(20)'
-		}
-	};
+    let fieldsTableTets = {
+        id : {
+            type: constant.TYPE_INT,
+            pk : {
+                order : constant.ASC
+            }
+        },
+        text : {
+            type: constant.TYPE_CHAR + '(20)',
+            require : true,
+            unique  : true
+        }
+    };
 
-	const arInsert = [[1, 'text1'], [2, 'text2', 'ZZZ']];
+    const arInsert = [['"text1"'], ['"text2"']];
 
 	let doit = async () => {
-		let isOK, res, isEmpty;
-
 		try {
-			await db.drop();
+            await db.init();
 
-			await db.init({test: fieldsTableTets});
+            setResult('.connect_status', 'CONNECT OK', true);
 
-			setResult('.connect_status', 'CONNECT OK', true);
+            // clear data
+            await db.dropSafe('test');
 
-			isEmpty = await db.isEmpty();
+            let isEmpty = await db.isEmpty();
 
-			setResult('.db_empty', 'DATABASE IS EMPTY ' + (isEmpty ? 'YES' : 'NO'), !isEmpty);
+            setResult(
+                '.db_empty',
+                'DATABASE IS EMPTY '+ (isEmpty ? 'YES' : 'NO'),
+                isEmpty,
+            );
 
-			await db.insert('test', ['id', 'text', 'comment'], arInsert);
+            await db.createTable('test', fieldsTableTets);
 
-			setResult('.insert_to_test_table', 'INSERT INTO "test" ', true);
+            setResult('.create_test_table', 'TABLE "test" IS CREATED ', true);
 
-			res = await db.getByPk('test', 1);
-			isOK = res.id === 1 && res.text === 'text1' && res.comment === null;
+            await db.insert('test', ['text'], arInsert);
 
-			setResult('.get_by_pk', `GET BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+            setResult('.inser_to_test_table', 'INSERT INTO "test" ', true);
 
-			res = await db.getByRequire('test', 'text', 'text2');
-			isOK = res.id === 2 && res.text === 'text2' && res.comment === 'ZZZ';
+            let rows = await db.select('test', 'id, text');
 
-			setResult('.get_by_require', `GET BY REQUIRE INDEX ${isOK ? 'OK' : 'NO' }`, isOK);
+            console.log('Get rows', rows);
 
-			res = await db.getAll('test');
+            if (!rows || !rows.length) throw new Error('Empty table after insert');
 
-			if (!res || !res.length) throw new Error('Empty table after insert');
+            let sumIds = rows.reduce((prev, next) => (prev.id || 0) + (next.id || 0));
 
-			let sumIds = res.reduce((prev, next) => (prev.id || 0) + (next.id || 0));
-			isOK = sumIds === 3;
-			setResult('.get_all', `GET ALL ${isOK ? 'OK' : 'NO' }`, isOK);
+            setResult('.check_autoincement', 'CHECK AUTOINCREMENT ', sumIds === 3);
+            setResult('.check_select', 'CHECK SELECT DATA', rows[0].text === 'text1' && rows[1].text === 'text2');
 
-			await db.updateByPk('test', 1, {comment: 'UPDATE'});
-			res = await db.getByPk('test', 1);
-			isOK = res.id === 1 && res.text === 'text1' && res.comment === 'UPDATE';
+            await db.update('test', {text : '"UPDATE"'}, 'id = 2');
 
-			setResult('.update_by_pk', `UPDATE BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+            rows = await db.select('test', 'text', 'id = 2');
 
-			await db.upInsert('test', {id: 2, text: 'UPDATE'});
+            setResult('.check_update', 'CHECK UPDATE', rows[0].text === 'UPDATE');
 
-			res = await db.getByPk('test', 2);
-			isOK = res.id === 2 && res.text === 'UPDATE' && !res.comment;
+            await db.delete('test', 'id = 1');
 
-			setResult('.up_insert_update', `UPDATE OR INSERT (update) ${isOK ? 'OK' : 'NO' }`, isOK);
+            rows = await db.select('test', 'id');
 
-			await db.upInsert('test', {id: 3, text: 'INSERT'});
-			res = await db.getByPk('test', 3);
-			isOK = res.id === 3 && res.text === 'INSERT';
+            setResult('.check_delete_where', 'CHECK DELETE BY CONDITION ', rows.length === 1);
 
-			setResult('.up_insert_insert', `UPDATE OR INSERT (insert) ${isOK ? 'OK' : 'NO' }`, isOK);
+            await db.delete('test');
 
-			await db.removeByPk('test', 3);
-			res = await db.getByPk('test', 3);
-			isOK = !res;
+            rows = await db.select('test', 'id');
 
-			setResult('.remove_by_pk', `REMOVE BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+            setResult('.check_delete_all', 'CHECK DELETE ALL IN TABLE  ', rows.length === 0);
 
-			await db.removeAll('test');
-			res = await db.getAll('test');
-			isOK = !Boolean(res.length);
+            await db.dropSafe('test');
 
-			setResult('.remove_all', `REMOVE ALL (insert) ${isOK ? 'OK' : 'NO' }`, isOK);
+            setResult('.drop_exist', 'TABLE "test" IS drop safe (be exist) ', true );
 
-			db.close();
-			await db.drop();
-			await db.init();
+            await db.dropSafe('test');
 
-			isOK = await db.isEmpty();
+            setResult('.drop_exist_empty', 'TABLE "test" IS drop safe (no exist)', true);
 
-			setResult('.check_drop_db', `CHECK DROP DATABAE ${isOK ? 'OK' : 'NO' }`, isOK);
-
-			db.close();
-
-			setResult('.the_end', 'THE END', true, true);
+            setResult('.the_end', 'THE END', true, true);
 
 		} catch (e) {
-			setResult('.error', e.message);
-			console.log('error ', e);
-			throw new Error(e);
+            setResult('.error', e.message);
+            throw new Error(e);
 		}
 
 	};
@@ -185,28 +161,27 @@ $(function () {
 	doit();
 
 });
-
 		  </code>
 		</pre>
 </div>
-
 <div class="first_part">
 	<div class="connect_status"></div>
 	<div class="db_empty"></div>
 	<div class="create_test_table"></div>
-	<div class="insert_to_test_table"></div>
-	<div class="get_by_pk"></div>
-	<div class="get_by_require"></div>
-	<div class="get_all"></div>
-	<div class="update_by_pk"></div>
-	<div class="up_insert_update"></div>
-	<div class="up_insert_insert"></div>
-	<div class="remove_all"></div>
-	<div class="remove_by_pk"></div>
-	<div class="check_drop_db"></div>
+	<div class="inser_to_test_table"></div>
+	<div class="check_autoincement"></div>
+	<div class="check_select"></div>
+	<div class="check_update"></div>
+	<div class="check_delete_where"></div>
+	<div class="check_delete_all"></div>
+	<div class="drop_exist"></div>
+	<div class="drop_exist_empty"></div>
 	<div class="the_end"></div>
 	<div class="error"></div>
 </div>
 
+<script type="text/javascript" src="wed.sql.min.js"></script>
+<script type="text/javascript" src="example/jquery.min.js"></script>
+<script type="text/javascript" src="example/example.js"></script>
 </body>
 </html>

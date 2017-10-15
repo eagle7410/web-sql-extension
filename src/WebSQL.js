@@ -1,24 +1,25 @@
 import QueryBuilder from "./QueryBuilder";
-import DriverInterface from "../DriverInterface";
 
-export default class WebSQL extends DriverInterface {
+/**
+ * Class for working with WebSql
+ * @class
+ */
+class WebSQL {
 	constructor() {
-		super();
-
 		const that = this;
 		that._db = null;
 		that._query = new QueryBuilder();
 		that._tx = null;
 		that._dbParams = {
 			name: 'web_db',
-			version: 1,
+			version: '0.0.1',
 			nameDisplay: 'Database in browser',
 			prevSize: 200000,
 		};
 	}
 
 	/**
-	 *
+	 * Constant for web-sql
 	 * @returns {{ASC: number, DESK: number, TYPE_INT: string, TYPE_INTEGER: string, TYPE_TINYINT: string, TYPE_SMALLINT: string, TYPE_MEDIUMINT: string, TYPE_BIGINT: string, TYPE_TEXT: string, TYPE_CHAR: string, TYPE_VARCHAR: string, TYPE_CHARACTER: string, TYPE_REAL: string, TYPE_DOUBLE_FLOAT: string, TYPE_DOUBLE: string, TYPE_DOUBLE_PRECISION: string, TYPE_DATETIME: string, TYPE_DATE: string, TYPE_BOOLEAN: string, TYPE_NUMERIC: string, TYPE_DECIMAL: string}}
 	 */
 	queryConst() {
@@ -26,7 +27,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Check db connect is open
 	 * @returns {boolean}
 	 */
 	isOpen() {
@@ -34,7 +35,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Init connect.
 	 * @param params
 	 * @returns {Promise}
 	 */
@@ -46,7 +47,7 @@ export default class WebSQL extends DriverInterface {
 		return new Promise((ok, bad) => {
 			that._db = openDatabase(
 				option.name,
-				'0.0.' + option.version,
+				option.version,
 				option.nameDisplay,
 				option.prevSizes
 			);
@@ -64,7 +65,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Delete table if exist
 	 * @param table {string}
 	 * @returns {Promise}
 	 */
@@ -73,7 +74,7 @@ export default class WebSQL extends DriverInterface {
 
 		return new Promise((ok, bad) => {
 			this._tx.executeSql(
-				`DROP TABLE IF EXISTS "${table}"`,
+				`DROP TABLE IF EXISTS ${table}`,
 				[],
 				() => ok(),
 				(tx, err) => bad(err)
@@ -82,20 +83,15 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Create table.
 	 * @param table string
-	 * @param fields {{fieldName : object,..}| null}
+	 * @param fields {{object}| null}
 	 * @returns {Promise}
 	 */
 	createTable(table, fields = {}) {
 		let that = this;
 
 		return new Promise((ok, bad) => {
-
-			if (!table) {
-				return bad('No table name');
-			}
-
 			that._tx.executeSql(
 				that._query.createTable(table, fields),
 				[],
@@ -106,7 +102,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Select from table.
 	 * @param table
 	 * @param fields
 	 * @param where
@@ -139,7 +135,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Insert to table.
 	 * @param table {string}
 	 * @param fields {string}
 	 * @param arInsert {array}
@@ -153,7 +149,7 @@ export default class WebSQL extends DriverInterface {
 			if (!arInsert.length) return ok();
 
 			that._tx.executeSql(
-				`INSERT INTO "${table}" (${fields.join(',')}) VALUES ${that._query.insertValues(arInsert)}`,
+				`INSERT INTO ${table} (${fields.join(',')}) VALUES ${that._query.insertValues(arInsert)}`,
 				[],
 				(tx, res) => ok(res),
 				(tx, err) => bad(err)
@@ -163,7 +159,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Check db is empty.
 	 * @returns {Promise}
 	 */
 	isEmpty() {
@@ -171,24 +167,20 @@ export default class WebSQL extends DriverInterface {
 
 		return new Promise((ok, bad) => {
 			that.select('sqlite_master', '*', 'type="table" AND name NOT IN ("__WebKitDatabaseInfoTable__", "sqlite_sequence")', 1)
-				.then(rows => {
-					// TODO: clear
-					console.log('rows', rows);
-					ok(Boolean(!rows.length))
-				})
+				.then(rows => ok(Boolean(!rows.length)))
 				.catch(err => bad(err));
 		});
 
 	}
 
 	/**
-	 *
+	 * Update table
 	 * @param table {string}
 	 * @param setFields {string}
 	 * @param where {string| null}
 	 * @returns {Promise}
 	 */
-	upInsert(table, setFields, where) {
+	update(table, setFields, where) {
 		let that = this;
 		let updateString = Object.keys(setFields).map(field => `${field} = ${setFields[field]}`).join(',');
 
@@ -207,7 +199,7 @@ export default class WebSQL extends DriverInterface {
 	}
 
 	/**
-	 *
+	 * Remove record from table.
 	 * @param table {string}
 	 * @param where {string}
 	 * @returns {Promise}
@@ -229,4 +221,4 @@ export default class WebSQL extends DriverInterface {
 	}
 }
 
-
+window.WebSqlClass = WebSQL;

@@ -14,12 +14,10 @@ let setResult = (selector, mess, isOk, noCount) => {
 		}));
 };
 
-
 $(function () {
 	"use strict";
 
-	// let db = new DbSqlClass(DbSqlClass.driverConst().IndexedDb);
-	let db = new DbSqlClass();
+	let db = new WebSqlClass();
 
 	let constant = db.queryConst();
 
@@ -31,99 +29,80 @@ $(function () {
 			}
 		},
 		text: {
-			type: constant.TYPE_TEXT,
+			type: constant.TYPE_CHAR + '(20)',
 			require: true,
 			unique: true
-		},
-		comment: {
-			type: constant.TYPE_CHAR + '(20)'
 		}
 	};
 
-	const arInsert = [[1, 'text1'], [2, 'text2', 'ZZZ']];
+	const arInsert = [['"text1"'], ['"text2"']];
 
 	let doit = async () => {
-		let isOK, res, isEmpty;
-
 		try {
-			await db.drop();
-
-			await db.init({test: fieldsTableTets});
+			await db.init();
 
 			setResult('.connect_status', 'CONNECT OK', true);
 
-			isEmpty = await db.isEmpty();
+			// clear data
+			await db.dropSafe('test');
 
-			setResult('.db_empty', 'DATABASE IS EMPTY ' + (isEmpty ? 'YES' : 'NO'), !isEmpty);
+			let isEmpty = await db.isEmpty();
 
-			await db.insert('test', ['id', 'text', 'comment'], arInsert);
+			setResult(
+				'.db_empty',
+				'DATABASE IS EMPTY ' + (isEmpty ? 'YES' : 'NO'),
+				isEmpty,
+			);
 
-			setResult('.insert_to_test_table', 'INSERT INTO `test`', true);
+			await db.createTable('test', fieldsTableTets);
 
-			res = await db.getByPk('test', 1);
-			isOK = res.id === 1 && res.text === 'text1' && res.comment === null;
+			setResult('.create_test_table', 'TABLE `test` IS CREATED', true);
 
-			setResult('.get_by_pk', `GET BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+			await db.insert('test', ['text'], arInsert);
 
-			res = await db.getByRequire('test', 'text', 'text2');
-			isOK = res.id === 2 && res.text === 'text2' && res.comment === 'ZZZ';
+			setResult('.inser_to_test_table', 'INSERT INTO `test`', true);
 
-			setResult('.get_by_require', `GET BY REQUIRE INDEX ${isOK ? 'OK' : 'NO' }`, isOK);
+			let rows = await db.select('test', 'id, text');
 
-			res = await db.getAll('test');
+			console.log('Get rows', rows);
 
-			if (!res || !res.length) throw new Error('Empty table after insert');
+			if (!rows || !rows.length) throw new Error('Empty table after insert');
 
-			let sumIds = res.reduce((prev, next) => (prev.id || 0) + (next.id || 0));
-			isOK = sumIds === 3;
-			setResult('.get_all', `GET ALL ${isOK ? 'OK' : 'NO' }`, isOK);
+			let sumIds = rows.reduce((prev, next) => (prev.id || 0) + (next.id || 0));
 
-			await db.updateByPk('test', 1, {comment: 'UPDATE'});
-			res = await db.getByPk('test', 1);
-			isOK = res.id === 1 && res.text === 'text1' && res.comment === 'UPDATE';
+			setResult('.check_autoincement', 'CHECK AUTOINCREMENT', sumIds === 3);
+			setResult('.check_select', 'CHECK SELECT DATA', rows[0].text === 'text1' && rows[1].text === 'text2');
 
-			setResult('.update_by_pk', `UPDATE BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+			await db.update('test', {text: '"UPDATE"'}, 'id = 2');
 
-			await db.upInsert('test', {id: 2, text: 'UPDATE'});
+			rows = await db.select('test', 'text', 'id = 2');
 
-			res = await db.getByPk('test', 2);
-			isOK = res.id === 2 && res.text === 'UPDATE' && !res.comment;
+			setResult('.check_update', 'CHECK UPDATE', rows[0].text === 'UPDATE');
 
-			setResult('.up_insert_update', `UPDATE OR INSERT (update) ${isOK ? 'OK' : 'NO' }`, isOK);
+			await db.remove('test', 'id = 1');
 
-			await db.upInsert('test', {id: 3, text: 'INSERT'});
-			res = await db.getByPk('test', 3);
-			isOK = res.id === 3 && res.text === 'INSERT';
+			rows = await db.select('test', 'id');
 
-			setResult('.up_insert_insert', `UPDATE OR INSERT (insert) ${isOK ? 'OK' : 'NO' }`, isOK);
+			setResult('.check_delete_where', 'CHECK DELETE BY CONDITION', rows.length === 1);
 
-			await db.removeByPk('test', 3);
-			res = await db.getByPk('test', 3);
-			isOK = !res;
+			await db.remove('test');
 
-			setResult('.remove_by_pk', `REMOVE BY PK ${isOK ? 'OK' : 'NO' }`, isOK);
+			rows = await db.select('test', 'id');
 
-			await db.removeAll('test');
-			res = await db.getAll('test');
-			isOK = !Boolean(res.length);
+			setResult('.check_delete_all', 'CHECK DELETE ALL IN TABLE', rows.length === 0);
 
-			setResult('.remove_all', `REMOVE ALL (insert) ${isOK ? 'OK' : 'NO' }`, isOK);
+			await db.dropSafe('test');
 
-			db.close();
-			await db.drop();
-			await db.init();
+			setResult('.drop_exist', 'TABLE `test` IS drop safe (be exist)', true);
 
-			isOK = await db.isEmpty();
+			await db.dropSafe('test');
 
-			setResult('.check_drop_db', `CHECK DROP DATABAE ${isOK ? 'OK' : 'NO' }`, isOK);
-
-			db.close();
+			setResult('.drop_exist_empty', 'TABLE `test` IS drop safe (no exist)', true);
 
 			setResult('.the_end', 'THE END', true, true);
 
 		} catch (e) {
 			setResult('.error', e.message);
-			console.log('error ', e);
 			throw new Error(e);
 		}
 
