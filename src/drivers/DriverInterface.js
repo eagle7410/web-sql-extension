@@ -1,5 +1,29 @@
 export default class DriverInterface {
-	queryConst() {}
+	queryConst() {
+		return {
+			ASC: '',
+			DESK: '',
+			TYPE_INT: '',
+			TYPE_INTEGER: '',
+			TYPE_TINYINT: '',
+			TYPE_SMALLINT: '',
+			TYPE_MEDIUMINT: '',
+			TYPE_BIGINT: '',
+			TYPE_TEXT: '',
+			TYPE_CHAR: '',
+			TYPE_VARCHAR: '',
+			TYPE_CHARACTER: '',
+			TYPE_REAL: '',
+			TYPE_DOUBLE_FLOAT: '',
+			TYPE_DOUBLE: '',
+			TYPE_DOUBLE_PRECISION: '',
+			TYPE_DATETIME: '',
+			TYPE_DATE: '',
+			TYPE_BOOLEAN: '',
+			TYPE_NUMERIC: '',
+			TYPE_DECIMAL: '',
+		}
+	}
 	isOpen() {}
 	init() {}
 	dropSafe (table) {}
@@ -7,6 +31,6 @@ export default class DriverInterface {
 	select (table, fields, where, limit, offset) {}
 	insert(table, fields, arInsert) {}
 	isEmpty () {}
-	update (table, setFields, where) {}
+	upInsert (table, setFields, where) {}
 	remove (table, where) {}
 }

@@ -41,11 +41,6 @@ export default class Query {
 	createTable (table, fields = {}) {
 		let that = this;
 		let constant = that.constant();
-
-		if (!table) {
-			return bad('No table name');
-		}
-
 		let fieldsAr = [];
 
 		Object.keys(fields).map(fieldName => {

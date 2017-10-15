@@ -8,6 +8,7 @@ module.exports = {
 		path: __dirname + "/dist",
 		filename: "wed.sql.js"
 	},
+	devtool: 'source-map',
 	module: {
 		loaders: [
 			{
@@ -18,8 +19,9 @@ module.exports = {
 				test: /\.js$/,
 				// Options to configure babel with
 				query: {
-					plugins: ['transform-runtime'],
-					presets: ['es2015', 'stage-0', 'react'],
+					plugins: ['transform-runtime' ],
+					presets: ['react','es2015','stage-0'],
+
 				}
 			}
 		]
