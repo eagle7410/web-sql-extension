@@ -1,10 +1,10 @@
 # web-sql-extension
-Extension for work this webSql.
+Extension for work this webSql.  
 
-###Script for include ./dist/wed.sql.min.js
-Example file in ./dist/index.html
+##Script for include ./dist/wed.sql.min.js
+Example file in ./dist/index.html  
 
-###Example:
+##Example:
 ```js
 let count = 0;
 let setResult = (selector, mess, isOk, noCount) => {
