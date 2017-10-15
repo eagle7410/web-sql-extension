@@ -1,0 +1,15 @@
+{
+	"error" : "",
+	"connect_status" : "CONNECT OK",
+	"db_empty" : "DATABASE IS EMPTY YES",
+	"create_test_table" : "TABLE `test` IS CREATED",
+	"inser_to_test_table" : "INSERT INTO `test`",
+	"check_autoincement" : "CHECK AUTOINCREMENT",
+	"check_select" : "CHECK SELECT DATA",
+	"check_update" : "CHECK UPDATE",
+	"check_delete_where" : "CHECK DELETE BY CONDITION",
+	"check_delete_all" : "CHECK DELETE ALL IN TABLE",
+	"drop_exist" : "TABLE `test` IS drop safe (be exist)",
+	"drop_exist_empty" : "TABLE `test` IS drop safe (no exist)",
+	"the_end" : "THE END"
+}

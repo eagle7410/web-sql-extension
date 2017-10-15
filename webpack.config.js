@@ -1,12 +1,13 @@
 require('babel-register');
 const webpack = require('webpack');
 const path = require('path');
+const MinifyPlugin = require("babel-minify-webpack-plugin");
 
 module.exports = {
-	entry: __dirname +"/src/DBSQL.js",
+	entry: __dirname +"/src/WebSQL.js",
 	output: {
 		path: __dirname + "/dist",
-		filename: "wed.sql.js"
+		filename: "wed.sql.min.js"
 	},
 	module: {
 		loaders: [
@@ -24,8 +25,11 @@ module.exports = {
 			}
 		]
 	},
+	plugins: [
+		new MinifyPlugin()
+	],
 	devServer: {
-		port : 3001,
+		port : 3002,
 		host : 'localhost',
 		contentBase :`${__dirname}/dist`
 	}

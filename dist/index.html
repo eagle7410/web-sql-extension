@@ -3,32 +3,49 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Example</title>
-	<script type="text/javascript" src="wed.sql.js"></script>
-	<script type="text/javascript" src="example/jquery.min.js"></script>
-	<script type="text/javascript" src="example/example.js"></script>
 </head>
 <body>
-	<style>
-		.error { color : red; font-size: 2em}
-		.success { color : chartreuse }
-		.test_number {color: gainsboro; font-size: 0.5em}
-		.the_end {color: darkgray; font-size: 2em; margin-top: 10px}
-		.first_part,
-		.second_part { width: 45%; display : inline-block !important;}
-		pre{
-			font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
-			margin-bottom: 10px;
-			overflow: auto;
-			width: auto;
-			padding: 5px;
-			background-color: #eee;
-			width: 650px!ie7;
-			padding-bottom: 20px!ie7;
-			max-height: 600px;
-			font-size: 0.75em
-		}
-	</style>
-	<div class="second_part">
+<style>
+	.error {
+		color: red;
+		font-size: 2em
+	}
+
+	.success {
+		color: chartreuse
+	}
+
+	.test_number {
+		color: gainsboro;
+		font-size: 0.5em
+	}
+
+	.the_end {
+		color: darkgray;
+		font-size: 2em;
+		margin-top: 10px
+	}
+
+	.first_part,
+	.second_part {
+		width: 45%;
+		display: inline-block !important;
+	}
+
+	pre {
+		font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+		margin-bottom: 10px;
+		overflow: auto;
+		width: auto;
+		padding: 5px;
+		background-color: #eee;
+		width: 650px !ie 7;
+		padding-bottom: 20px !ie 7;
+		max-height: 600px;
+		font-size: 0.75em
+	}
+</style>
+<div class="second_part">
 		<pre>
 			<code>
 let count = 0;
@@ -146,23 +163,25 @@ $(function () {
 });
 		  </code>
 		</pre>
-	</div>
-	<div class="first_part">
-		<div class="connect_status"></div>
-		<div class="db_empty"></div>
-		<div class="create_test_table"></div>
-		<div class="inser_to_test_table"></div>
-		<div class="check_autoincement"></div>
-		<div class="check_select"></div>
-		<div class="check_update"></div>
-		<div class="check_delete_where"></div>
-		<div class="check_delete_all"></div>
-		<div class="drop_exist"></div>
-		<div class="drop_exist_empty"></div>
-		<div class="the_end"></div>
-		<div class="error"></div>
-	</div>
+</div>
+<div class="first_part">
+	<div class="connect_status"></div>
+	<div class="db_empty"></div>
+	<div class="create_test_table"></div>
+	<div class="inser_to_test_table"></div>
+	<div class="check_autoincement"></div>
+	<div class="check_select"></div>
+	<div class="check_update"></div>
+	<div class="check_delete_where"></div>
+	<div class="check_delete_all"></div>
+	<div class="drop_exist"></div>
+	<div class="drop_exist_empty"></div>
+	<div class="the_end"></div>
+	<div class="error"></div>
+</div>
 
-
+<script type="text/javascript" src="wed.sql.min.js"></script>
+<script type="text/javascript" src="example/jquery.min.js"></script>
+<script type="text/javascript" src="example/example.js"></script>
 </body>
 </html>
